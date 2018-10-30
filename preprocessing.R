@@ -42,16 +42,68 @@ illegal_titles <- manuscripts %>%
   dbSendQuery("SELECT * FROM manuscript_titles_illegal") %>%
   fetch(n = Inf) %>%
   as_tibble() %>%
-  filter(record_status != "DELETED") # filter out deleted records
+  filter(record_status != "DELETED") %>% # filter out deleted records
+  select(-record_status, -illegal_folio, -bastille_book_category, -bastille_total_volumes,
+         -bastille_current_volumes, -bastille_copies_number) # Drop columns irrelevant to record linkage task
 
-# Have a look at the two tables:
-editions
-illegal_titles
+# Have a look at some random selections of the two tables:
+sample_n(editions, 15)
+sample_n(illegal_titles, 15)
 
 # SECTION 2: COMBINE RECORDS INTO SINGLE TABLE
 
+# The overall aim is to join both tables together. This basically means cleaning 'illegal_titles' so the fields
+# have the same kind of data in them as in 'editions', and also changing the column names so that the computer
+# has no trouble working out which columns encode the same information.
+
 # First clean up the illegal_titles table.
+# These first few lines strip away everything except for the place of publication from the imprint data.
+# It was all hard-coded by MF using trial and error.
 illegal_titles %<>%
-  mutate(bastille_imprint_full = gsub("Published in", "", bastille_imprint_full),
-         bastille_imprint_full = gsub(", publisher not identified", "", bastille_imprint_full),
-         bastille_imprint_full = str_squish(bastille_imprint_full))
+  mutate(bastille_imprint_full = gsub("Published in", "", bastille_imprint_full), # remove phrase 'published in'
+         bastille_imprint_full = gsub(", publisher not identified", "", bastille_imprint_full), # remove phrase 'publisher not identified'
+         bastille_imprint_full = gsub("No .+[.]", "", bastille_imprint_full),  # remove any notes like 'No publisher identified.'
+         bastille_imprint_full = gsub("[^[:alnum:]_].+", "", bastille_imprint_full), # remove everything after the first punctuation mark
+         bastille_imprint_full = gsub("[0-9]", "", bastille_imprint_full), # remove numbers
+         bastille_imprint_full = gsub("[[:punct:]]", "", bastille_imprint_full), # strip punctuation
+         bastille_imprint_full = gsub("contains|source|this|place|various|dates|deux|publication|music|printed|trans", "", bastille_imprint_full, ignore.case = T), # strip out some particular words that are specific to this column
+         bastille_imprint_full = str_squish(bastille_imprint_full), # remove leading and trailing whitespace
+         bastille_imprint_full = gsub("^.{1,3}$", "", bastille_imprint_full) # remove any entries only 2-3 characters long
+  )
+
+# Have a look at results:
+select(illegal_titles, bastille_imprint_full) %>%
+  filter(nchar(bastille_imprint_full) > 0) %>%
+  sample_n(15)
+
+# Now try to extract place of publication from the illegal_notes field
+illegal_titles %<>%
+  mutate(illegal_notes = str_match(illegal_notes, "Published in (.+)")[,2], # grab everything after phrase 'published in'
+         illegal_notes = word(illegal_notes, 1, sep = regex("[:, ]")), # just keep first word of new string, which is where the place name is
+         illegal_notes = gsub("[0-9]", "", illegal_notes), # delete dates from field
+         illegal_notes = gsub("^.{1,3}$", "", illegal_notes) # delete short rubbishy strings
+  )
+
+# Have a look at the results
+select(illegal_titles, illegal_notes) %>%
+  filter(nchar(illegal_notes) > 0) %>%
+  sample_n(15)
+
+# Now that those two columns have been fixed up, we can coalesce them.
+illegal_titles %<>%
+  mutate(stated_publication_places = coalesce(illegal_notes, bastille_imprint_full)) %>%
+  select(-illegal_notes, -bastille_imprint_full)
+
+# Have a look at the results
+sample_n(illegal_titles, 15)
+
+# The next step is to clean the date field for the illegal books. Luckily this is really easy.
+illegal_titles %<>%
+  mutate(stated_publication_years = gsub("No Date Available", "", illegal_date)) %>% # remove extraneous string and also change the column name
+  select(-illegal_date) # drop old column.
+
+# Have a look at the results
+illegal_titles %>%
+  filter(nchar(stated_publication_years) > 0) %>%
+  sample_n(15)
+

@@ -1,0 +1,28 @@
+"0","```r
+papermakers <- read_csv(\"data/papermakers_with_places.csv\") %>%
+  print()
+```"
+"1","Parsed with column specification:
+cols(
+  .default = col_character(),
+  has_correspondence = col_integer(),
+  partnership = col_integer(),
+  number_of_letters = col_integer(),
+  number_of_documents = col_integer(),
+  ID = col_integer(),
+  HRE = col_integer(),
+  EL = col_integer(),
+  IFC = col_integer(),
+  P = col_integer(),
+  HE = col_integer(),
+  HT = col_integer(),
+  WT = col_integer(),
+  PT = col_integer(),
+  PrT = col_integer(),
+  distance_from_neuchatel = col_integer(),
+  latitude = col_double(),
+  longitude = col_double(),
+  other_documents = col_integer()
+)
+See spec(...) for full column specifications.
+"

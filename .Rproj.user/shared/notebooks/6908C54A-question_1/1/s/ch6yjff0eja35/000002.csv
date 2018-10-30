@@ -1,0 +1,7 @@
+"0","```r
+papermakers %>%
+  filter(number_of_documents > third_quartile) %>%
+  arrange(desc(number_of_documents)) %>%
+  select(client_name, number_of_letters, other_documents, name, distance_from_neuchatel) %T>%
+  write_csv(\"most_important_papetiers.csv\")
+```"

@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1540873045870.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2557733441",
+    "id" : "3F8C989",
+    "lastKnownWriteTime" : 1540877587,
+    "last_content_update" : 1540877587342,
+    "path" : "C:/git/record-linkage/preprocessing.R",
+    "project_path" : "preprocessing.R",
+    "properties" : {
+        "cursorPosition" : "47,8",
+        "scrollLine" : "26",
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

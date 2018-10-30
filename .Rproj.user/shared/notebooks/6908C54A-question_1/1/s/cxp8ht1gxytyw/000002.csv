@@ -1,0 +1,7 @@
+"0","```r
+library(tidyverse, quietly = T)
+library(magrittr, quietly = T)
+library(lubridate, quietly = T)
+papermakers <- read_csv(\"data/papermakers_with_places.csv\") %>%
+  print()
+```"

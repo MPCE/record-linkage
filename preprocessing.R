@@ -127,6 +127,10 @@ setdiff(colnames(illegal_titles), colnames(editions))
 # Now we can simply perform a full join to concatenate the tables.
 combined_data <- full_join(illegal_titles, editions)
 
+# One final thing: remove 'n. pl.' from stated_publication_places:
+combined_data %<>%
+  mutate(stated_publication_places = gsub("n[.]pl[.]", "", stated_publication_places))
+
 # See the results
 sample_n(combined_data, 15)
 

@@ -99,7 +99,7 @@ def run_deduper(deduper, data_frame, settings_file, training_file, recall_weight
     # Calculate threshold for matches
     print(f"Computing threshold based on a recall weighting of {recall_weight}.")
     start = time.perf_counter()
-    threshold = deduper.threshold(data, recall_weight = 1)
+    threshold = deduper.threshold(data, recall_weight = recall_weight)
     end = time.perf_counter()
     print(f"Computation complete. Threshold = {threshold}. It took {end - start:.3f} seconds.")
 

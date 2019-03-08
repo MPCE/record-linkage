@@ -5,7 +5,7 @@ import os
 import time
 import numpy as np
 
-def dedupe_initialise(data_frame, fields, settings_file, training_file, sample_size = 15000):
+def dedupe_initialise(data_frame, fields, settings_file = False, training_file = False, sample_size = 15000):
     """
     Takes a data dictionary and field definitions and creates a Dedupe object.
 
@@ -14,8 +14,11 @@ def dedupe_initialise(data_frame, fields, settings_file, training_file, sample_s
         dedupe as dd
 
     params:
-        data: a pandas data frame of all the records to be deduped
-        fields: a list of dicts, where each dict describes a field that the model should inspect
+        data: (pandas.DataFrame) the records to be deduped
+        fields: (list of dicts) each dict describes a field that the model should inspect
+        settings_file: (str) path to saved settings from a pretrained model
+        training_file: (str) path to json file of saved training data
+        sample_size: (int) the number of training pairs for the model to consider
 
     returns:
         deduper: a Dedupe object
@@ -23,14 +26,18 @@ def dedupe_initialise(data_frame, fields, settings_file, training_file, sample_s
 
     # Check to see if an initialised model has already been saved.
     # If so, load the initialised model. If not, initialise a new model using the fields list supplied.
-    if os.path.exists(settings_file):
-        print(f'Reading pre-trained model from {settings_file}...')
-        with open(settings_file, 'rb') as f:
-            deduper = dd.StaticDedupe(f)
-            print('Done')
-            return deduper
+    if settings_file:
+        if os.path.exists(settings_file):
+            print(f'Reading pre-trained model from {settings_file}...')
+            with open(settings_file, 'rb') as f:
+                deduper = dd.StaticDedupe(f)
+                print('Done')
+                return deduper
+        else:
+            print(f'{settings_file} not found! New active learning model initialised.')
+            deduper = dd.Dedupe(fields)
     else:
-        print('Dedupe object for active learning initialised.')
+        print('Initialising model for active learning.')
         deduper = dd.Dedupe(fields)
 
     # Convert data frame into dict as required by Dedupe
@@ -41,10 +48,15 @@ def dedupe_initialise(data_frame, fields, settings_file, training_file, sample_s
     deduper.sample(data, sample_size)
 
     # Load existing training file if it exists
-    if os.path.exists(training_file):
-        print('reading labeled examples from ', training_file)
-        with open(training_file, 'rb') as f:
-            deduper.readTraining(f)
+    if training_file:
+        if os.path.exists(training_file):
+            print('reading labeled examples from ', training_file)
+            with open(training_file, 'rb') as f:
+                deduper.readTraining(f)
+        else:
+            print(f'{training_file} not found! Model initialised without training data.')
+    else:
+        print('Model initialised without training data.')
 
     return deduper
 

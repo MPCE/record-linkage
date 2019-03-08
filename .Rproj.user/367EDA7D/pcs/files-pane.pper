@@ -1,6 +1,10 @@
 {
-    "path" : "C:/git/record-linkage",
+    "path" : "C:/git/record-linkage/internal/code",
     "sortOrder" : [
+        {
+            "ascending" : false,
+            "columnIndex" : 4
+        },
         {
             "ascending" : true,
             "columnIndex" : 2

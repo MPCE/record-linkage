@@ -1,0 +1,45 @@
+﻿place_code,name,alternative_names,town,C18_lower_territory,C18_sovereign_territory,C21_admin,C21_country,geographic_zone,BSR,HRE,EL,IFC,P,HE,HT,WT,PT,PrT,distance_from_neuchatel,notes,geoname,geoname_lat,geoname_lng
+pm523,Abbeville,Null,Abbeville,Amiens,France,Somme,France,French,Bourbon France,0,0,0,0,NA,0,0,0,0,NA,NA,NA,NA,NA
+pn536,Agen,NULL,Agen,Bordeaux,France,Lot-et-Garonne,France,French,Bourbon France,0,0,0,0,0,0,0,0,0,NA,NA,NA,NA,NA
+pn537,Albi,Alby,Albi,Toulouse,France,Tarn,France,French,Bourbon France,0,0,0,0,0,0,0,0,0,NA,NA,NA,NA,NA
+pn538,Alençon,NULL,Alençon,Alençon,France,Orne,France,French,Bourbon France,0,0,0,0,0,0,0,0,0,NA,NA,NA,NA,NA
+pn539,Angers,NULL,Angers,Tours,France,Maine-et-Loire,France,French,Bourbon France,0,0,0,0,1,0,0,0,0,NA,"University founded at Angers, 1229, preceded by Studium from about 1080.",NA,NA,NA
+pm524,Arras,null,Arras,Lille,France,Pas de Calais,France,French,Bourbon France,0,0,0,1,0,0,0,0,0,NA,technically Arras had a Conseil superieure and not a Parlement,NA,NA,NA
+pn540,Aurillac,NULL,Aurillac,Riom,France,Cantal,France,French,Bourbon France,0,0,0,0,0,0,0,0,0,NA,NA,NA,NA,NA
+pn541,Bayeux,NULL,Bayeux,Caen,France,Calvados,France,French,Bourbon France,0,0,0,0,0,0,0,0,0,NA,NA,NA,NA,NA
+pl044,BELLE-ISLE en MER,Belle-Ile-en-Mer,BELLE-ISLE-en-MER,Rennes,France,Morbihan,France,French,Bourbon France,0,0,0,0,0,0,0,0,0,764,Part of province of Brittany from 1759.,NA,NA,NA
+pm525,Brest,null,Brest,Rennes,France,Finistère,France,French,Bourbon France,0,0,0,0,0,0,0,0,0,NA,NA,NA,NA,NA
+pm526,Bruyères,Null,Bruyères,Nancy,France,Vosges,France,French,Bourbon France,0,0,0,0,0,0,0,0,0,NA,NA,NA,NA,NA
+pl509,CALEVES,"Calève, CalÃªves",CALEVES,Berne,Swiss confederation,Vaud,Switzerland,Helvetic,Swiss,0,0,0,0,0,0,0,0,0,85,"Confirmation and coordinates from Domaine de Caleve, Nyon.",NA,NA,NA
+pn542,Carcassonne,NULL,Carcassonne,Toulouse,France,Aude,France,French,Bourbon France,0,0,0,0,0,0,0,0,0,NA,NA,NA,NA,NA
+pn543,Châtellerault,NULL,Châtellerault,Poitiers,France,Vienne,France,French,Bourbon France,0,0,0,0,0,0,0,0,0,NA,NA,NA,NA,NA
+pn544,Coutances,NULL,Coutances,Caen,France,Manche,France,French,Bourbon France,0,0,0,0,0,0,0,0,0,NA,NA,NA,NA,NA
+pn545,Dieuze,NULL,Dieuze,Nancy,France,Moselle,France,French,Bourbon France,0,0,0,0,0,0,0,0,0,NA,NA,NA,NA,NA
+pm536,Dinan,Null,Dinan,Rennes,France,Côtes-d'Armor,France,French,Bourbon France,0,0,0,0,0,0,0,0,0,NA,NA,NA,NA,NA
+pm527,Douai,null,Douai,Lille,France,Nord,France,French,Bourbon France,0,0,0,1,1,0,0,0,0,NA,NA,NA,NA,NA
+pm528,Etampes,null,Etampes,Paris,France,Ile-de France,France,French,Bourbon France,0,0,0,0,NA,0,0,0,0,NA,NA,NA,NA,NA
+pn546,Evreux,NULL,Evreux,Rouen,France,Eure,France,French,Bourbon France,0,0,0,0,0,0,0,0,0,NA,NA,NA,NA,NA
+pl442,"LANCE, La",NULL,"LANCE, La",Berne,Swiss confederation,Vaud,Switzerland,Helvetic,Swiss,0,0,0,0,0,0,0,0,0,21,1 km NE of Concise; in joint Berne-Fribourg governed territory (Dictionnaire Historique de la Suisse).,NA,NA,NA
+pm529,Lorient,Null,Lorient,Rennes,France,Morbihan,France,French,Bourbon France,0,0,0,0,0,0,0,0,0,NA,NA,NA,NA,NA
+pl458,MÜNZ,NULL,MÜNZ,Weid-Neuwied,Weid-Neuwied,Rhineland-Palatinate,Germany,German,Rest of Europe,1,0,0,0,0,0,0,0,0,385,Confirmation: letters from Société typographique de Neuwied and Munz. Has been impossible to identify on map or through Google Earth. Position is assumed beside Neuwied.,NA,NA,NA
+pm530,Montdidier,Mondidier,Montdidier,Amiens,France,Somme,France,French,Bourbon France,0,0,0,0,0,0,0,0,0,NA,nb. Also a small commune in Moselle,NA,NA,NA
+pl265,MONTMIRAIL,NULL,MONTMIRAIL,Neuchâtel,Prussia: Neuchâtel,Neuchâtel,Switzerland,Helvetic,Swiss,0,0,0,0,0,0,0,0,1,8,"For mapping and data analysis reasons, Neuchâtel sovereign territory is 'Neuchâtel' and not 'Prussia'.",NA,NA,NA
+pn547,Pamiers,NULL,Pamiers,Perpignan,France,Ariège,France,French,Bourbon France,0,0,0,0,0,0,0,0,0,NA,NA,NA,NA,NA
+pl315,PLANCEMONT,NULL,PLANCEMONT,Neuchâtel,Prussia: Neuchâtel,Neuchâtel,Switzerland,Helvetic,Swiss,0,0,0,0,0,0,0,0,1,24,"Confirmation: Google Earth. For mapping and data analysis reasons, Neuchâtel sovereign territory is 'Neuchâtel' and not 'Prussia'.",NA,NA,NA
+pl327,PRAGUE,NULL,PRAGUE,Bohemia,Austrian Empire,Prague,Czech Republic,Austro-Hungarian,Rest of Europe,1,0,0,0,1,1,0,0,0,651,Higher education: The Utraquist university (Carolinum)  was created in 1347.,NA,NA,NA
+pl330,PROVENCE,NULL,PROVENCE,Berne,Swiss confederation,Vaud,Switzerland,Helvetic,Swiss,0,0,0,0,0,0,0,0,0,19,Joint ruled by Berne and Fribourg (Dictionnaire Historique de la Suisse).,NA,NA,NA
+pm531,Quimper,Null,Quimper,Rennes,France,Finistère,France,French,Bourbon France,0,0,0,0,NA,0,0,0,0,NA,NA,NA,NA,NA
+pn548,Rethel,NULL,Rethel,Châlons,France,Ardennes,France,French,Bourbon France,0,0,0,0,0,0,0,0,0,NA,NA,NA,NA,NA
+pn549,Riom,NA,Riom,Riom,France,Puy-de-Dôme,France,French,Bourbon France,0,0,0,0,0,0,0,0,0,NA,NA,NA,NA,NA
+pm532,Saint-Brieuc,St Brieuc,Saint-Brieuc,Rennes,France,Côtes-d'Armor,France,French,Bourbon France,0,0,0,0,NA,0,0,0,0,NA,NA,NA,NA,NA
+pl364,SAINT-JEAN,NULL,SAINT-JEAN,Neuchâtel,Prussia: Neuchâtel,Neuchâtel,Switzerland,Helvetic,Swiss,0,0,0,0,0,0,0,0,1,14,"Mapping coordinates are taken from reformed Church serving Canton de Neuchâtel Groupement de l'Ouest (Abeille - Les Forges - Saint-Jean - Les Eplatures - La Sagne). Exact location of Saint-Jean uncertain, but Church approximatively equidistant between Les Eplatures and La Sagne. For mapping and data analysis reasons, Neuchâtel sovereign territory is 'Neuchâtel' and not 'Prussia'.",NA,NA,NA
+pn550,Saint-Mihiel,NULL,Saint-Mihiel,Nancy,France,Meuse,France,French,Bourbon France,0,0,0,0,0,0,0,0,0,NA,NA,NA,NA,NA
+pn551,Saint-Omer,NULL,Saint-Omer,Lille,France,Pas-de-Calais,France,French,Bourbon France,0,0,0,0,0,0,0,0,0,NA,NA,NA,NA,NA
+pl379,"SAUGEY, Le",NULL,"SAUGEY, Le",Berne,Swiss confederation,Vaud,Switzerland,Helvetic,Swiss,0,0,0,0,0,0,0,0,0,71,Confirmation: hamlet in commune of Féchy (Dictionnaire Historique de la Suisse).,NA,NA,NA
+pn552,Stenay,NULL,Stenay,Metz,France,Meuse,France,French,Bourbon France,0,0,0,0,0,0,0,0,0,NA,NA,NA,NA,NA
+pn553,Tulle,NULL,Tulle,Limoges,France,Limousin,France,French,Bourbon France,0,0,0,0,0,0,0,0,0,NA,Actual departement name (C21 lower territory should be Corrèze,NA,NA,NA
+pm533,Vannes,Null,Vannes,Rennes,France,Morbihan,France,French,Bourbon France,0,0,0,0,0,0,0,0,0,NA,NA,NA,NA,NA
+pm534,Vendôme,Null,Vendôme,Orléans,France,Loir-et-Cher,France,French,Bourbon France,0,0,0,0,0,0,0,0,0,NA,NA,NA,NA,NA
+pm535,Vesoul,Null,Vesoul,Besançon,France,Haute-Saône,France,French,Bourbon France,0,0,0,0,0,0,0,0,0,NA,NA,NA,NA,NA
+pl494,WURTTEMBERG,NULL,WURTTEMBERG,Duchy of Wurttemberg,Wurttemberg,Baden-Wurttemberg,Germany,German,Rest of Europe,1,0,0,0,0,0,1,0,0,242,Confirmation: Have not got to bottom of this yet; apparently county of Wurttemberg but no town.,NA,NA,NA
+pq609,FRANCE [Unidentified place],NULL,FRANCE [Unidentified place],null,France,null,France,French,Bourbon France,0,0,0,0,0,0,0,0,0,NA,"ID notes for Confiscations Registers data: Clearly Seve in both customs and confiscation registers. Place not definitively identified. Several candidates. Title of only book coming from Seve gives no clue. Could it be Sevres outside Paris? Imprint of Paris, veuve Duchesne suggests might be local to Paris.   ID notes for Confiscations Registers data: Clearly Seve in both customs and confiscation registers. Place not definitively identified. Several candidates. Title of only book coming from Seve gives no clue. Could it be Sevres outside Paris? Imprint of Paris, veuve Duchesne suggests might be local to Paris.",NA,NA,NA

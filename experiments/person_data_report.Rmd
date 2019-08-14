@@ -1,0 +1,404 @@
+---
+title: 'Consolidating the Person Data: The Way Forward'
+author: "Michael Falk"
+output:
+  html_document:
+    df_print: paged
+    code_folding: hide
+---
+
+# Introduction
+
+Currently data about people is distributed throughout our datasets. We have no single, validated list of all persons to which new datasets can refer. Luckily, the original FBTEE database distinguished `people` from `clients` of the STN, and this structure offers us a simple path towards consolidating this important tranche of our data.
+
+In this report, I describe the structure of the person data as it currently stands, and describe what seems to me to be the best workflow for consolidating it.
+
+```{r message=FALSE}
+library(tidyverse) # for data manipulation
+library(magrittr) # for a more powerful piping operator
+library(DBI) # to enable database connection
+library(RMySQL) # a simple API for connecting to a MySQL database
+library(stringdist) # string distance measures
+
+stringsimmatrix <- function(a, b, method = 'osa') {
+  #
+  # Computes a string similarity matrix for all pairs of words in two character vectors.
+  #
+  # Params:
+  #   a: a character vector
+  #   b: a character vector
+  #   c: the chosen similarity method
+  #
+  message("Computing similarity using ", method, "...")
+  
+  # Start timer
+  tick <- Sys.time()
+  
+  sim_vecs <- lapply(a, function(x) {
+    stringsim(x, b, method = method) # Compare each item in a with all of b
+  })
+  sim_vecs <- unlist(sim_vecs) # Turn list into long vector
+  sim_mat <- matrix(sim_vecs, nrow = length(a), ncol = length(b), byrow = T) # Reshape into matrix
+  
+  # End timer
+  tock <- Sys.time()
+  t <- tock - tick
+  message("Complete. It took ", round(t, digits = 2), " second", if(t != 1){"s"}, ".")
+  
+  return(sim_mat)
+}
+
+manuscripts <- dbConnect(MySQL(), user="root", dbname="manuscripts", host="localhost")
+```
+
+# 1. Where the Person data is
+
+```{r message=FALSE, error=FALSE, warning=FALSE}
+# All the person data...
+
+clients <- manuscripts %>%
+  dbSendQuery("SELECT * FROM clients") %>%
+  fetch(n = Inf) %>%
+  as.tibble()
+
+people <- manuscripts %>%
+  dbSendQuery("SELECT * FROM people") %>%
+  fetch(n = Inf) %>%
+  as.tibble()
+
+clients_people <- manuscripts %>%
+  dbSendQuery("SELECT * FROM clients_people") %>%
+  fetch(n = Inf) %>%
+  as.tibble()
+
+booksellers <- manuscripts %>%
+  dbSendQuery("SELECT * FROM manuscript_agents_booksellers") %>%
+  fetch(n = Inf) %>%
+  as.tibble()
+
+inspectors <- manuscripts %>%
+  dbSendQuery("SELECT * FROM manuscript_agents_inspectors") %>%
+  fetch(n = Inf) %>%
+  as.tibble()
+
+dealers <- manuscripts %>%
+  dbSendQuery("SELECT * FROM manuscript_dealers") %>%
+  fetch(n = Inf) %>%
+  as.tibble()
+
+authors <- manuscripts %>%
+  dbSendQuery("SELECT * FROM authors") %>%
+  fetch(n = Inf) %>%
+  as.tibble()
+
+person_keywords <- manuscripts %>%
+  dbSendQuery(paste0(
+    "SELECT * FROM keywords ",
+    "WHERE tag_code = 't01'"
+  )) %>%
+  fetch(n = Inf) %>%
+  as.tibble()
+
+people_professions <- manuscripts %>%
+  dbSendQuery("SELECT * FROM people_professions ") %>%
+  fetch(n = Inf) %>%
+  as.tibble()
+```
+Currently, there are six different tables of people in the database:
+
+* `clients`: This table lists all the clients of the Soci&eacute;t&eacute; Typographique de Neuch&acirc;tel&mdash;it has not been updated.
+* `manuscript_authors`: This table lists all the authors of all the books in the data. This has been updated as new books have been added to the MPCE database. We retain a copy of `authors`, the original table from FBTEE-1. 
+* `people`: This is FBTEE-1's original master list of human persons&mdash;it has not been updated.
+* `manuscript_dealers`: This table lists all the book dealers involved in the estampillage de 1778 and the Parisian Stock Sales
+* `manuscript_agents_inspectors`: This table lists the `r nrow(inspectors)` inspectors involved in the estampillage de 1778. `r sum(inspectors$Client_Code %in% dealers$Client_Code)` of them appear in the `dealers` table. `r sum(inspectors$Client_Code %in% clients$client_code)` is a client of the STN.
+* `manuscript_agents_booksellers`: This table duplicates data from `manuscript_dealers`, and will be deleted.
+
+All of the datasets that refer to people contain references to at least one of these tables. There are three exceptions:
+
+* `keywords`: There are `r nrow(person_keywords)` keywords in the FBTEE classification system that refer to people. None of these has been assigned a person code.
+* There are numerous new persons in the "Confiscations" and "Permission Simple" spreadsheets. It is not clear to what extent these persons lists have been validated against `manuscript_dealers` and `manuscript_agents_inspectors`. At first glance there do not seem to be glaring inconsistenceies. They do seem to have been pretty thoroughly checked against `clients`.
+
+# 2. The approach thus far
+
+Thus far in MPCE, there seems to have been a two-pronged approach.
+
+* **Prong 1: Authors.** New authors have been added to `manuscript_authors` and assigned author codes.
+* **Prong 2: Everyone Else.** New participants in the book trade have been added to `manuscript_dealers`, `manuscript_agents_inspectors`, or to sheets in Excel workbooks, and have been assigned client codes. New prefixes&mdash;'cm','cn' or 'co'&mdash;have been used instead of FBTEE-1's 'cl' in order to avoid creating invalid data. It appears that the eventual intention was to add all these new persons to the `clients` table.
+
+# 3. My proposed way forward in a nutshell
+
+I propose a different way forward, that will avoid the creation of invalid data and make it easier to integrate new datasets into the database in the future. Rather than creating new clients to accomodate new people, we should revivie FBTEE-1's `people` table and create persons instead. This will also allow us to maintain FBTEE's original data model, in which the distinction between 'client' and 'person' was crucial. If corporate entities exist in any new datasets, then a simple many-to-many join can be created between the new kind of entity and the people table.
+
+Creating additional `clients` is not a great idea, because the `clients` table was set up to accomodate clients of the STN and contains many fields that are irrelevant to other kinds of people, e.g. `first_date`, `last_date`, and `number_of_letters`. Likewise, new sorts of person in new datasets may come with different kinds of information that we wish to record. Perhaps we will want to record the tenure of book inspectors, for instance. Finally, if we do not keep the `clients` table intact, it will become harder to answer a certain question: who was a client of the STN? If we keep the `clients` table intact, then this question will always be easy to answer, since we can simply check if a given person appears in the table.
+
+I do not anticipate significant difficulties in shifting toward this new data model, for reasons I hope to identify below.
+
+# 4. The workflow in detail
+
+## Step 1: Delete the 'booksellers' table
+
+The table `manuscript_agents_booksellers` records information about `r nrow(booksellers)` book dealers. As the below code block demonstrates, every row is duplicated in the `manuscript_dealers` table. None of the data entry interfaces are connected to `manuscript_agents_booksellers`. It should simply be deleted.
+
+```{r}
+# How many booksellers DO NOT appear in the dealers table?
+booksellers_not_in_dealers_table <- sum(!booksellers$Client_Code %in% dealers$Client_Code)
+```
+
+`booksellers_not_in_dealers_table` = `r booksellers_not_in_dealers_table`.
+
+## Step 2: Assign person codes to dealers and inspectors
+
+Currently the `dealers` and `inspectors` have client codes but not person codes. New client codes have been generated with the prefixes 'cm','cn', 'co' or 'cp'. Several of them were clients of the STN, so have old client codes indicated by a 'cl':
+
+```{r}
+# How many dealers and inspectors have 'cl' codes?
+old_codes <- c(str_match(dealers$Client_Code, "cl.+"), str_match(inspectors$Client_Code, "cl.+")) %>% unique() %>% .[!is.na(.)]
+
+# Are there any 'cl' codes that DO NOT appear in the original clients table?
+invalid_cl <- sum(!old_codes %in% clients$client_code)
+```
+
+`old_codes`: There are `r length(old_codes)` clients of the STN among the new dealers and inspectors.
+
+`invalid_cl`: There are `r invalid_cl` dealers or inspectors who have invalidly been assigned a new 'cl' code.
+
+### The state of the person data
+
+Before we can start generating new person codes for the dealers and inspectors, we need to know the state of the person data.
+```{r}
+# Join people and clients
+cp_joined <- clients %>%
+  full_join(clients_people, by="client_code") %>%
+  full_join(people, by="person_code")
+```
+There are `r sum(is.na(cp_joined$client_code))` persons who do not have a client code, and `r sum(is.na(cp_joined$person_code))` clients who were never assigned a person code.
+
+The people without `client_codes` are in the table below. Several were clearly intended to be deleted from the database, the others are mysterious. They could perhaps be deleted without loss, since the person data has never been connected to any of the major datasets in FBTEE. But `r cp_joined %>% filter(is.na(client_code)) %>% pull(person_code) %>% (function(x) x %in% people_professions$person_code)() %>% sum()` have been assigned one or more professions in FBTEE, so there is probably on balance some useful information that we should not hazard deleting. It may be possible that some of the new dealers and inspectors are among these `r sum(is.na(cp_joined$client_code))` persons without client codes.
+
+```{r} 
+cp_joined %>% filter(is.na(client_code)) %>% select(person_code, person_name)
+```
+
+The clients without `person_codes` are displayed in the table below. In general, the picture is encouraging. There are one or two natural persons without person codes, but most of these clients appear to be corporate entities, whom we would expect not to have a person code necessarily.
+
+```{r}
+cp_joined %>% filter(is.na(person_code)) %>% select(client_code, client_name)
+```
+
+My feeling is that the person data is in good shape, and tidying it up does not need to be prioritised before we start joining new datasets to it.
+
+### Assigning person codes to dealers: the need for a many-to-many relationship
+
+Many of the dealers in the `dealers` table are corporate entities. The table below shows all the dealers with the telltale words 'et' or 'les' in their names. Since corporate entities can correspond to multiple person codes, a join table, `dealer_person` should be created to link the dealers and persons in a many-to-many relationship. In addition, the profession data will need to be added to `people_professions`, and place data to.
+
+```{r}
+filter(dealers, str_detect(Dealer_Name, "&| et | les "))
+```
+
+When ready, the script below will generate the necessary tables:
+
+```{r}
+
+# Code for generating new person codes
+
+## Suggestion: We should update this script so that it connects to the databse and calculates the max_person parameter
+## afresh each time.
+
+max_person <- people %>%
+  pull(person_code) %>%
+  str_extract("\\d+") %>%
+  as.numeric() %>%
+  max()
+
+generate_person_codes <- function(vec, max_person) {
+  #
+  # Generates new person codes for all the empty slots in a supplied character vector.
+  #
+  # Params:
+  #   vec: a character vector (or tibble column)
+  #   max_person: the maximum current person code
+  #
+  new_nums <- seq_along(vec[is.na(vec)]) # Generate sequence of id numbers
+  new_ids <- paste0("id", new_nums + max_person) # Add 'id' prefix and increase all id numbers by the current maximum
+  vec[is.na(vec)] <- new_ids # Fill in blank positions of vector
+  return(vec) # Return entire update vector
+}
+
+# Code for generating join data where possible (joins for partnerships to be created manually)
+dealer_person <- dealers %>%
+  left_join(clients_people, by = c("Client_Code" = "client_code")) %>% # Get person codes for all existing client codes
+  filter(!str_detect(Dealer_Name, "\\bet\\b|\\bles\\b")) %>% # Filter out partnerships - these will need to be created manually
+  select(ID, person_code) %>% # Just keep desired columns
+  mutate(person_code = generate_person_codes(person_code, max_person)) # Invoke function to generate new person codes
+
+# Code for generating new person codes where required
+new_people <- dealers %>% # Get dealers data
+  left_join(dealer_person, by = "ID") %>% # Get person codes for all dealers
+  filter(!person_code %in% people$person_code, # Keep all rows where person codes not already in table
+         !is.na(person_code)) %>% # and also where person_code is not NA 
+  transmute(person_code = person_code, # Keep required data
+            person_name = dbEscapeStrings(manuscripts, Dealer_Name)) # Remember to escape MySQL special characters
+  
+
+# Code for generating SQL for database update
+dp_out_file <- "create_dealer_person.sql" # Path to save SQL for generating new table
+new_person_out_file <- "update_people_table.sql" # Path to save SQL for adding new person codes to people table
+
+dp_sql <- paste0("DROP TABLE IF EXISTS `dealer_person`;\n",
+                 "CREATE TABLE `dealer_person` (\n",
+                 "    `ID` int(25) NOT NULL,\n",
+                 "    `person_code` char(6) NOT NULL,\n",
+                 "PRIMARY KEY (`ID`,`person_code`)\n",
+                 ") ENGINE=InnoDB DEFAULT CHARSET=utf8;\n",
+                 "INSERT INTO `dealer_person` (`ID`,`person_code`) VALUES\n",
+                 paste(
+                   paste0("(", dealer_person$ID, ", '", dealer_person$person_code, "')"),
+                   collapse = ",\n"
+                 ),
+                 ";")
+
+write(dp_sql, dp_out_file) # Save to file
+
+new_person_sql <- paste0("INSERT INTO `people` (`person_code`,`person_name`) VALUES\n",
+                         paste(
+                           paste0("('", new_people$person_code, "', '", new_people$person_name, "')"),
+                           collapse = ",\n"
+                           ),
+                         ";")
+
+write(new_person_sql, new_person_out_file) # Save to file
+
+```
+
+### Assigning person codes to inspectors: a simple join?
+
+None of the inspectors is a corporate entity, as is evidenced by the table below: `r inspectors`
+
+Accordingly, it will not be necessary to create a join table. We can simply add person codes to the inspectors table directly, using a script like the one below:
+
+```{r}
+# NB: Ensure to refresh the connection to the database, get the up-to-date person codes and recalculate
+# max_person before using the generated SQL.
+
+i_p <- inspectors %>%
+  left_join(clients_people, by = c("Client_Code" = "client_code")) %>% # get existing person codes
+  mutate(person_code = generate_person_codes(person_code, max_person)) # create new person codes
+
+update_insp_out_file <- "update_inspectors.sql"
+
+ins_sql <- paste0("ALTER TABLE manuscript_agents_inspectors\n",
+                  "ADD person_code CHAR(6);\n",
+                  "UPDATE manuscript_inspectors\n",
+                  paste(
+                    paste0("SET person_code='", i_p$person_code, "'\nWHERE ID=", i_p$ID, "';\n"),
+                    collapse = ""
+                  ))
+```
+
+### Reforming events tables
+
+Once person codes have been assigned to the dealers and inspectors, references in the following tables would need to be amended:
+
+* `manuscript_events`: The table of book stampings
+* `manuscript_sales_events`: The table of Parisian stock auctions
+* `manuscript_events_sales`: The table of individual sales at the Parisian stock auctions
+
+The client codes currently used to refer to inspectors and dealers in these tables should be replaced with references to the primary keys of the `dealers` and `inspectors` tables. Many-to-many relationships were established between these tables and the `dealers` and `inspectors` tables by concatenating strings of client codes into a single field. It would be better to have join tables, and creating them will be a trivial task.
+
+## Step 3: Assign person codes to authors
+
+The next major task will be to assign person codes to all the authors in the data. Performing a fuzzy string match suggests that several of the authors in the dataset were clients of the STN and therefore already have person codes: (Scroll to the right using the small black arrow at the top right of the table if you wish to see the 'optimal string alignment' and 'cosine similarity' scores.)
+
+```{r}
+# Run seperate match against person table
+pa_mat <- stringsimmatrix(authors$author_name, people$person_name, method = 'osa')
+people_authors <- which(pa_mat > 0.8, arr.ind = T)
+# Have a look at them...
+pa_join <- tibble(
+  person_code = people[people_authors[,2],]$person_code,
+  person_name = people[people_authors[,2],]$person_name,
+  author_code = authors[people_authors[,1],]$author_code,
+  author_name = authors[people_authors[,1],]$author_name,
+  osa = pa_mat[people_authors],
+  cosine = stringsim(person_name, author_name, method = 'cosine')
+) %>%
+  arrange(desc(osa), desc(cosine)) %>%
+  distinct(author_code, .keep_all = T)
+
+pa_join # Display the data
+```
+
+I would suggest that we export this matched data to Excel for checking. Once the data match is confirmed, the scripts above for automatically generating new person codes can easily be applied, and all of the authors assigned a person code. We could then add profession codes en masse if desired, or add them piecemeal as opportunity arises if manual categorisation were preferred. Perhaps they could all receive profession 256, '&eacute;crivain', as a default.
+
+Once the authors have been given person codes, I would recommend that the seperate `author` table is deleted, and all `author_codes` across the database be replaced with the corresponding person code. The only table where `author_codes` are used is `manuscript_books_authors`, so this will be a trivial task.
+
+## Step 4: Match person keywords
+
+The final major consolidation task for the existing MySQL data is to match person keywords to the people they refer to. There are `r nrow(person_keywords)` keywords with the 'person' tag in the FBTEE system. As the table below shows, there are only a handful of probably matches with the existing person data: (Scroll to the right using the small black arrow at the top right of the table if you wish to see the 'optimal string alignment' and 'cosine similarity' scores.)
+
+```{r}
+# Is there a person corresponding to any of the keywords at the moment?
+kp_mat <- stringsimmatrix(person_keywords$keyword, people$person_name)
+top_kp_matches <- apply(kp_mat, 1, which.max)
+top_kp_scores <- apply(kp_mat, 1, max)
+kp_join <- tibble(
+  keyword_code = person_keywords$keyword_code,
+  keyword = person_keywords$keyword,
+  person_code = people$person_code[top_kp_matches],
+  person_name = people$person_name[top_kp_matches],
+  osa = top_kp_scores,
+  cosine = stringsim(keyword, person_name, method = "cosine")
+) %>%
+  arrange(desc(osa), desc(cosine)) %>%
+  filter(osa > 0.8)
+
+kp_join
+```
+
+Only about `r kp_join %>% filter(osa > 0.85) %>% nrow()` of these matches look credible. However, this number will increase once we have matched all of the authors to persons, as the table below indicates:
+
+```{r}
+ka_mat <- stringsimmatrix(person_keywords$keyword, authors$author_name)
+top_ka_matches <- apply(ka_mat, 1, which.max)
+top_ka_scores <- apply(ka_mat, 1, max)
+ka_join <- tibble(
+  keyword_code = person_keywords$keyword_code,
+  keyword = person_keywords$keyword,
+  author_code = authors$author_code[top_ka_matches],
+  author_name = authors$author_name[top_ka_matches],
+  osa = top_ka_scores,
+  cosine = stringsim(keyword, author_name, method = "cosine")
+) %>%
+  arrange(desc(osa), desc(cosine)) %>%
+  filter(osa > 0.7)
+
+ka_join
+```
+
+Perhaps about `r filter(ka_join, osa > 0.8 & cosine > 0.9) %>% nrow()` of these matches look okay.
+
+Once we have matched the authors and people, we can do this keyword data match again. Since there are only a few dozen possible matches to check, we can carefully do this by hand. Since there will be a 1-1 correspondence between `keywords` and `persons`, we can simply add the `person_code` as a column in the `keywords` table. We may like to repeat this exercise for places at some time.
+
+## Step 5: Run data match on spreadsheets, import
+
+Once we have consolidated all the data that we have available in database form, we can import the people in the 'permission simple', 'provincial inspection' and 'confiscation' spreadsheets. At first glance, it looks as though the person data in the 'permission simple' spreadsheet is valid and does not contain duplicate or erroneous `client_codes`. However, since `manuscripte_dealers` and `manuscript_agents_inspectors` have hitheto only been accessible from the backend, I think we should do a thorough data validation at the time that the 'permission simple' workbook is imported.
+
+The 'confiscations' data obviously contains many new people. I think it would make sense to store the censors in `manuscript_agents_inspectors` or in a new `censors` table, thus keeping a clear record of who in the eighteenth century held this role. Once all the data has been consolidated through steps 1-4, it will be a simple task to run a full data match and see if any of the new names in the confiscations register already appear in any of our other datasets. New person codes can easily be generated for the rest.
+
+## Step 6: Consolidate place and profession data, link to external sources
+
+There is profession information recorded in both the `dealers` and `inspectors` tables. These tables likewise contain `place` data. After running the data match, there may turn out to be profession and place data in both the 'confiscations' and 'permission simple' spreadsheets.
+
+Thus, after all the connections have been made between the people and the core bibliographic datasets, it will then be necessary to extract the profession and place data to the correct tables. A new `people_places` table should be created to store information about where persons lived or operated. This will draw in all the data in `clients_addresses` as well, after which `clients_addresses` can perhaps be deleted in order to avoid duplication. There is already a `people_professions` table which can easily be updated with new profession information.
+
+I have not written the scripts here that would perform these operations, but they would be straightforward.
+
+This would also be the stage when we could look to link our data to external sources, such as CERL.
+
+# Conclusion
+
+It has taken five months of daily work with the `manuscripts` database, and considerable work with a range of data matching algorithms, to get a full handle on the shape and structure of the data, and a clear picture of the way forward. I believe this is the best option available to us. It will result in a lean, open data model, that will retain the structures of individual datasets while joining them through a single, simple API, the `people` table.
+
+As we build the new database out of the existing one, tables and columns can easily be renamed. There will doubtless be small practical issues that arise as this process is underway, but I see no reason to think that it could not be substantially complete by the end of February, which would have us on track to complete the GraphQL API by June.
+
+Of course, consolidating the person data is not the only major data validation task we need to undertake. At the same time, I will be working towards applying `super_book_codes` to the 'banned books list' and `book_codes` to the 'Bastille register'. We are only weeks away from completing this task as it is. We may undertake some light databse normalisation of the Parisian Stock Sales and estampillage data as we build out the GraphQL endpoint, but these will be easy tasks since the data was validated on entry.
